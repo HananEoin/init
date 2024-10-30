@@ -30,7 +30,9 @@ public class Route {
     @Column(name="VEHICLEID")
     private Long vehicleId;
 
+    @Column(name="STARTTIME")
     private String startTime;
 
+    @Column(name="ENDTIME")
     private String endTime;
 }
