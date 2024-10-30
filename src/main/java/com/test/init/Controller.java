@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Optional;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,6 +38,8 @@ public class Controller {
 
     @Autowired 
     private RouteRepo routeRepo;
+
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
     
     @GetMapping(value = "/vehicle", produces= MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Vehicle>> getAllVehicles() {
@@ -68,12 +73,12 @@ public class Controller {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
         //Check if start is valid 
         try {
-            dateFormat.parse(route.getStartTime());
+            LocalDate.parse(route.getStartTime(), formatter);
         } catch (Exception ex) {
             return new ResponseEntity<>("Invalid date offered for startTime, follow format yyyy-MM-dd-HH-mm", HttpStatus.BAD_REQUEST);
         }
         try {
-            dateFormat.parse(route.getEndTime());
+            LocalDate.parse(route.getEndTime(), formatter);
         } catch (Exception ex) {
             return new ResponseEntity<>("Invalid date offered for endTime, follow format yyyy-MM-dd-HH-mm", HttpStatus.BAD_REQUEST);
         }
@@ -89,17 +94,22 @@ public class Controller {
     public ResponseEntity GetDriversByRoute(@PathVariable Long routeId, @RequestParam(required = false) String time) {
         List<Driver> drivers = new ArrayList<>();
         List<Route> routesList = routeRepo.findByRouteId(routeId);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
 
         if (time != null){
             try {
-                dateFormat.parse(time);
+                LocalDate.parse(time, formatter);
             } catch (Exception ex) {
-                return new ResponseEntity<>("Invalid Time offered in Query, follow format yyyy-MM-dd-HH-mm", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Invalid date offered for time, follow format yyyy-MM-dd-HH-mm", HttpStatus.BAD_REQUEST);
             }
 
+            LocalDateTime timeToCheck = LocalDateTime.parse(time, formatter);
+            
+            System.out.println("Checking time " + timeToCheck);
             for (Route route: routesList){
-                if (time.compareTo(route.getEndTime()) > 0 && time.compareTo(route.getStartTime()) < 0){
+                LocalDateTime startTime = LocalDateTime.parse(route.getStartTime(), formatter);
+                LocalDateTime endTime = LocalDateTime.parse(route.getEndTime(), formatter);
+
+                if (timeToCheck.isBefore(endTime) && timeToCheck.isAfter(startTime)){
                     Optional <Vehicle> optVehicle =  vehicleRepo.findById(route.getVehicleId());
                     if (optVehicle.isPresent()){
                         long driverId = optVehicle.get().getDriverId();
