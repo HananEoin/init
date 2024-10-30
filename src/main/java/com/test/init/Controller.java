@@ -12,12 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,6 +39,8 @@ public class Controller {
 
     @Autowired 
     private RouteRepo routeRepo;
+
+    Logger logger = LoggerFactory.getLogger(Controller.class);
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
     
@@ -71,7 +74,6 @@ public class Controller {
     @PostMapping(value = "/route", produces= MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createRoute(@RequestBody Route route) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
-        //Check if start is valid 
         try {
             LocalDate.parse(route.getStartTime(), formatter);
         } catch (Exception ex) {
@@ -83,7 +85,6 @@ public class Controller {
             return new ResponseEntity<>("Invalid date offered for endTime, follow format yyyy-MM-dd-HH-mm", HttpStatus.BAD_REQUEST);
         }
 
-        //Check if end is valid time
 
         routeRepo.save(route);
         return new ResponseEntity<>(route, HttpStatus.ACCEPTED);
@@ -92,6 +93,8 @@ public class Controller {
     //This should return a List ( 0 - n ) of all drivers on RouteId if Time is null. If Time is not null there should be max one entry in the List
     @GetMapping("/{routeId}/DriverDetails")
     public ResponseEntity GetDriversByRoute(@PathVariable Long routeId, @RequestParam(required = false) String time) {
+        logger.info("Entering GetDriversByRoute with routeId:" + routeId);
+        
         List<Driver> drivers = new ArrayList<>();
         List<Route> routesList = routeRepo.findByRouteId(routeId);
 
@@ -99,9 +102,9 @@ public class Controller {
             try {
                 LocalDate.parse(time, formatter);
             } catch (Exception ex) {
+                logger.error("Incorrect date format given", ex);
                 return new ResponseEntity<>("Invalid date offered for time, follow format yyyy-MM-dd-HH-mm", HttpStatus.BAD_REQUEST);
             }
-
             LocalDateTime timeToCheck = LocalDateTime.parse(time, formatter);
             
             System.out.println("Checking time " + timeToCheck);
@@ -139,9 +142,12 @@ public class Controller {
         }
 
         if (drivers.isEmpty()){
+            logger.info("No drivers found");
             return new ResponseEntity<>(drivers, HttpStatus.NOT_FOUND);
         }
 
+
+        logger.info("Returning list of drivers");
         return new ResponseEntity<>(drivers, HttpStatus.NOT_FOUND);
     }
     
