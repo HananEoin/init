@@ -92,7 +92,7 @@ public class Controller {
 
     //This should return a List ( 0 - n ) of all drivers on RouteId if Time is null. If Time is not null there should be max one entry in the List
     @GetMapping("/{routeId}/DriverDetails")
-    public ResponseEntity GetDriversByRoute(@PathVariable Long routeId, @RequestParam(required = false) String time) {
+    public ResponseEntity getDriversByRoute(@PathVariable Long routeId, @RequestParam(required = false) String time) {
         logger.info("Entering GetDriversByRoute with routeId:" + routeId);
         
         List<Driver> drivers = new ArrayList<>();
@@ -107,7 +107,6 @@ public class Controller {
             }
             LocalDateTime timeToCheck = LocalDateTime.parse(time, formatter);
             
-            System.out.println("Checking time " + timeToCheck);
             for (Route route: routesList){
                 LocalDateTime startTime = LocalDateTime.parse(route.getStartTime(), formatter);
                 LocalDateTime endTime = LocalDateTime.parse(route.getEndTime(), formatter);
